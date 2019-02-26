@@ -155,7 +155,7 @@ AC_SUBST(PKGADD_VENDOR)
 
 dnl
 dnl initialize all the info variables
-    curl_ssl_msg="no      (--with-{ssl,gnutls,nss,polarssl,mbedtls,cyassl,winssl,darwinssl,mesalink} )"
+    curl_ssl_msg="no      (--with-{ssl,gnutls,nss,polarssl,mbedtls,cyassl,schannel,securetransport,mesalink} )"
     curl_ssh_msg="no      (--with-libssh2)"
    curl_zlib_msg="no      (--with-zlib)"
  curl_brotli_msg="no      (--with-brotli)"
@@ -1511,20 +1511,28 @@ fi
 
 OPT_DARWINSSL=no
 AC_ARG_WITH(darwinssl,dnl
-AC_HELP_STRING([--with-darwinssl],[enable Apple OS native SSL/TLS])
-AC_HELP_STRING([--without-darwinssl], [disable Apple OS native SSL/TLS]),
+AC_HELP_STRING([--with-darwinssl],[enable use of Secure Transport])
+AC_HELP_STRING([--without-darwinssl], [disable use of Secure Transport]),
   OPT_DARWINSSL=$withval)
 
-AC_MSG_CHECKING([whether to enable Apple OS native SSL/TLS])
+AC_ARG_WITH(securetransport,dnl
+AC_HELP_STRING([--with-secure-transport],[enable sue of Secure Transport])
+AC_HELP_STRING([--without-secure-transport], [disable use of Secure Transport]),
+  OPT_DARWINSSL=$withval)
+
+AC_MSG_CHECKING([whether to enable Secure Transport])
 if test -z "$ssl_backends" -o "x$OPT_DARWINSSL" != xno; then
   if test "x$OPT_DARWINSSL" != "xno" &&
      test -d "/System/Library/Frameworks/Security.framework"; then
     AC_MSG_RESULT(yes)
     AC_DEFINE(USE_DARWINSSL, 1, [to enable Apple OS native SSL/TLS support])
     AC_SUBST(USE_DARWINSSL, [1])
-    ssl_msg="Apple OS-native"
+    AC_DEFINE(USE_SECTRANSP, 1, [enable Secure Transport])
+    AC_SUBST(USE_SECTRANSP, [1])
+    ssl_msg="Secure Transport"
     test darwinssl != "$DEFAULT_SSL_BACKEND" || VALID_DEFAULT_SSL_BACKEND=yes
     DARWINSSL_ENABLED=1
+    SECURETRANSPORT_ENABLED=1
     LDFLAGS="$LDFLAGS -framework CoreFoundation -framework Security"
   else
     AC_MSG_RESULT(no)
@@ -2636,7 +2644,7 @@ fi
 case "x$OPENSSL_ENABLED$GNUTLS_ENABLED$NSS_ENABLED$POLARSSL_ENABLED$MBEDTLS_ENABLED$CYASSL_ENABLED$WINSSL_ENABLED$DARWINSSL_ENABLED$MESALINK_ENABLED" in
 x)
   AC_MSG_WARN([SSL disabled, you will not be able to use HTTPS, FTPS, NTLM and more.])
-  AC_MSG_WARN([Use --with-ssl, --with-gnutls, --with-polarssl, --with-cyassl, --with-nss, --with-winssl, --with-darwinssl, or --with-mesalink to address this.])
+  AC_MSG_WARN([Use --with-ssl, --with-gnutls, --with-polarssl, --with-cyassl, --with-nss, --with-schannel, --with-secure-transport, or --with-mesalink to address this.])
   ;;
 x1)
   # one SSL backend is enabled
@@ -3065,9 +3073,9 @@ AC_HELP_STRING([--disable-versioned-symbols], [Disable versioned symbols in shar
         elif test "x$CYASSL_ENABLED" = "x1"; then
           versioned_symbols_flavour="CYASSL_"
         elif test "x$WINSSL_ENABLED" = "x1"; then
-          versioned_symbols_flavour="WINSSL_"
+          versioned_symbols_flavour="SCHANNEL_"
         elif test "x$DARWINSSL_ENABLED" = "x1"; then
-          versioned_symbols_flavour="DARWINSSL_"
+          versioned_symbols_flavour="SECURE_TRANSPORT_"
         else
           versioned_symbols_flavour=""
         fi
